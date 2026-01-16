@@ -16,7 +16,7 @@ describe('PmdExecutor', () => {
   beforeAll(async () => {
     executor = new PmdExecutor();
     pmdAvailable = await executor.initialize();
-    
+
     // Create temp test directory
     testDir = join(tmpdir(), 'pmd-mcp-test-' + Date.now());
     mkdirSync(testDir, { recursive: true });
@@ -53,7 +53,7 @@ describe('PmdExecutor', () => {
         console.log('Skipping: PMD not installed');
         return;
       }
-      
+
       const version = await executor.getVersion();
       expect(version).toMatch(/^\d+\.\d+\.\d+$/);
     });
@@ -80,10 +80,16 @@ describe('PmdExecutor', () => {
 
   describe('check', () => {
     it('should return error for non-existent path', async () => {
+      if (!pmdAvailable) {
+        // When PMD is not installed, we get 'PMD not found' before path validation
+        console.log('Skipping: PMD not installed - path validation requires PMD');
+        return;
+      }
+
       const result = await executor.check({
         path: '/non/existent/path',
       });
-      
+
       expect(result.success).toBe(false);
       expect(result.processingErrors).toContain('Path not found: /non/existent/path');
     });
@@ -143,11 +149,17 @@ public class CleanCode {
 
   describe('cpd', () => {
     it('should return error for non-existent path', async () => {
+      if (!pmdAvailable) {
+        // When PMD is not installed, we get 'PMD not found' before path validation
+        console.log('Skipping: PMD not installed - path validation requires PMD');
+        return;
+      }
+
       const result = await executor.cpd({
         path: '/non/existent/path',
         language: 'java',
       });
-      
+
       expect(result.success).toBe(false);
       expect(result.processingErrors).toContain('Path not found: /non/existent/path');
     });
@@ -161,7 +173,7 @@ public class CleanCode {
       // Create files with duplicated code
       const file1 = join(testDir, 'Dup1.java');
       const file2 = join(testDir, 'Dup2.java');
-      
+
       const duplicatedCode = `
 public class DupClass {
     public void duplicatedMethod() {
@@ -176,7 +188,7 @@ public class DupClass {
     }
 }
 `;
-      
+
       writeFileSync(file1, duplicatedCode.replace('DupClass', 'Dup1'));
       writeFileSync(file2, duplicatedCode.replace('DupClass', 'Dup2'));
 
